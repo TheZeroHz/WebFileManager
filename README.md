@@ -194,7 +194,3 @@ wfm.setAuth("admin", "changeme");  // omit or empty user = open access
 The UI shows a sign-in dialog. Credentials are sent as HTTP Basic on API and
 transfer requests. See `examples/04_Auth_MultiVolume`.
 
-
-## License
-
-Same terms as the parent ESP32CSI_Vision project unless otherwise noted.
