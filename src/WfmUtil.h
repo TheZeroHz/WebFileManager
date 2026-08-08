@@ -68,7 +68,10 @@ inline const char *mimeFor(const String &path) {
   if (lower.endsWith(".mkv")) return "video/x-matroska";
   if (lower.endsWith(".mp3")) return "audio/mpeg";
   if (lower.endsWith(".wav")) return "audio/wav";
-  if (lower.endsWith(".ogg")) return "audio/ogg";
+  if (lower.endsWith(".ogg") || lower.endsWith(".opus")) return "audio/ogg";
+  if (lower.endsWith(".aac")) return "audio/aac";
+  if (lower.endsWith(".m4a")) return "audio/mp4";
+  if (lower.endsWith(".flac")) return "audio/flac";
   if (lower.endsWith(".html") || lower.endsWith(".htm")) return "text/html";
   if (lower.endsWith(".css")) return "text/css";
   if (lower.endsWith(".js")) return "application/javascript";

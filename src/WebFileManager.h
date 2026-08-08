@@ -46,6 +46,13 @@ class WebFileManager {
   WebFileManager &setName(const char *name);
 
   /**
+   * Show a "Camera" link back to another HTTP UI (e.g. EthH264Record on :80).
+   * Pass 0 to hide. Call before begin().
+   */
+  WebFileManager &setHomePort(uint16_t port);
+  uint16_t homePort() const { return _homePort; }
+
+  /**
    * Optional HTTP Basic auth. Empty user disables auth.
    * Example: wfm.setAuth("admin", "secret");
    */
@@ -86,6 +93,7 @@ class WebFileManager {
   WebServer *_file = nullptr;
   uint16_t _uiPort = 80;
   uint16_t _filePort = 81;
+  uint16_t _homePort = 0;
   const char *_name = "WebFileManager";
   const char *_authUser = nullptr;
   const char *_authPass = "";

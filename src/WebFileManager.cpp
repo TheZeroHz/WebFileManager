@@ -35,6 +35,11 @@ WebFileManager &WebFileManager::setPorts(uint16_t uiPort, uint16_t filePort) {
   return *this;
 }
 
+WebFileManager &WebFileManager::setHomePort(uint16_t port) {
+  _homePort = port;
+  return *this;
+}
+
 WebFileManager &WebFileManager::setName(const char *name) {
   if (name && name[0]) _name = name;
   return *this;
@@ -294,10 +299,11 @@ void WebFileManager::refreshUsageAsync() {
 void WebFileManager::handleRoot() {
   _ui->setContentLength(CONTENT_LENGTH_UNKNOWN);
   _ui->send(200, "text/html; charset=utf-8", "");
-  char boot[160];
+  char boot[200];
   snprintf(boot, sizeof(boot),
-           "<script>window.WFM_FILE_PORT=%u;window.WFM_MULTI=%s;window.WFM_AUTH=%s;</script>",
-           (unsigned)_filePort, _multi ? "true" : "false", authEnabled() ? "true" : "false");
+           "<script>window.WFM_FILE_PORT=%u;window.WFM_HOME_PORT=%u;window.WFM_MULTI=%s;window.WFM_AUTH=%s;</script>",
+           (unsigned)_filePort, (unsigned)_homePort, _multi ? "true" : "false",
+           authEnabled() ? "true" : "false");
   _ui->sendContent(boot);
   _ui->sendContent_P(WFM_INDEX_HTML);
 }

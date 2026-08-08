@@ -11,7 +11,7 @@ Browse, preview, upload, download, rename, copy, move, and delete files from a b
 | Storage | `WfmStorageSD`, `WfmStorageSD_MMC`, `WfmStorageFFat`, `WfmStorageLittleFS`, `WfmStorageSPIFFS`, `WfmStorageFS` |
 | Network | `WfmNetwork::beginSTA`, `beginAP`, `beginEthernet` |
 | HTTP | UI/API on port **80**, transfers on **81** (configurable) |
-| Transfers | Upload, download with HTTP Range, **browser ZIP** (multi-select), image/video preview |
+| Transfers | Upload, download with HTTP Range, **browser ZIP**, **audio/image/video preview** |
 | Concurrency | Optional FreeRTOS file task + storage mutex |
 | UI | Windows-like explorer (PROGMEM), live transfer speed |
 
@@ -184,6 +184,8 @@ Open **`http://<ip>/`** in a browser. Hard-refresh after firmware updates.
 | `examples/01_Ethernet_SD` | Ethernet + SD_MMC (Guition M3 pins helper) |
 | `examples/02_WiFiSTA_SD` | WiFi station + SPI SD |
 | `examples/03_WiFiAP_LittleFS` | SoftAP + LittleFS |
+| `examples/04_Auth_MultiVolume` | Basic auth + multi-volume |
+| ESP32CSI_Vision `examples/14_EthSdBrowser` | CSI SD helper + Ethernet + WebFileManager (SD + LittleFS) |
 
 ## Security (username / password)
 
@@ -194,3 +196,7 @@ wfm.setAuth("admin", "changeme");  // omit or empty user = open access
 The UI shows a sign-in dialog. Credentials are sent as HTTP Basic on API and
 transfer requests. See `examples/04_Auth_MultiVolume`.
 
+
+## License
+
+Same terms as the parent ESP32CSI_Vision project unless otherwise noted.

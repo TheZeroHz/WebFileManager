@@ -187,6 +187,7 @@ button,input{font:inherit}
     <div class="appico"><svg viewBox="0 0 16 16"><path d="M2 3h5l1 1h6v9H2z"/></svg></div>
     <h1 id="winTitle">Web File Manager</h1>
     <div class="spacer"></div>
+    <a id="homeLink" class="gh-link" href="#" style="display:none" title="Back to camera UI">Camera</a>
     <a class="gh-link" href="https://github.com/TheZeroHz" target="_blank" rel="noopener noreferrer" title="GitHub - TheZeroHz">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.6 7.6 0 0 1 8 3.58c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
       <span>TheZeroHz</span>
@@ -378,7 +379,7 @@ function kindOf(name,isDir,isVol,vtype){
   var e=extOf(name);
   if(['jpg','jpeg','png','gif','webp','bmp','svg'].indexOf(e)>=0) return 'img';
   if(['mp4','webm','mov','avi','mkv'].indexOf(e)>=0) return 'vid';
-  if(['mp3','wav','ogg','aac'].indexOf(e)>=0) return 'aud';
+  if(['mp3','wav','ogg','aac','m4a','flac','opus'].indexOf(e)>=0) return 'aud';
   if(['txt','log','md','csv','json','xml','ini','cfg','nfo','srt','html','htm','css','js'].indexOf(e)>=0) return 'txt';
   return 'file';
 }
@@ -392,7 +393,8 @@ function typeLabel(name,isDir,isVol,vtype){
   var e=extOf(name); if(!e) return 'File';
   var map={png:'PNG image',jpg:'JPEG image',jpeg:'JPEG image',gif:'GIF image',webp:'WEBP image',bmp:'Bitmap',
     mp4:'MP4 video',avi:'AVI video',mov:'MOV video',mkv:'MKV video',webm:'WEBM video',
-    mp3:'MP3 audio',wav:'WAV audio',txt:'Text Document',log:'Log File',json:'JSON File',csv:'CSV File',
+    mp3:'MP3 audio',wav:'WAV audio',ogg:'OGG audio',aac:'AAC audio',m4a:'M4A audio',flac:'FLAC audio',opus:'Opus audio',
+    txt:'Text Document',log:'Log File',json:'JSON File',csv:'CSV File',
     '3mf':'3MF File',gcode:'G-code File'};
   return map[e]||(e.toUpperCase()+' File');
 }
@@ -708,7 +710,7 @@ async function showPreview(item){
     await fillDetails(full);
     return;
   }
-  setPreviewBusy(true, kind==='vid'?'Loading video... Cancel anytime':'Loading...');
+  setPreviewBusy(true, kind==='vid'?'Loading video... Cancel anytime':(kind==='aud'?'Loading audio...':'Loading...'));
   previewAbort=new AbortController();
   var view=viewUrl(full);
   try{
@@ -729,8 +731,43 @@ async function showPreview(item){
           setPreviewBusy(false,'Preview failed');
         };
       }
-    }else if(kind==='vid'||kind==='aud'){
-      if(kind==='vid' && !(ext==='mp4'||ext==='webm')){
+    }else if(kind==='aud'){
+      var audOk=['wav','mp3','ogg','aac','m4a','flac','opus'];
+      if(audOk.indexOf(ext)<0){
+        modal.classList.add('light');
+        modal.innerHTML='<div class="hint">This audio format cannot be previewed here. Use Download.</div>';
+        stage.innerHTML='<div class="hint">No audio preview for this type.</div>';
+        setPreviewBusy(false,'Not previewable');
+        await fillDetails(full);
+        return;
+      }
+      var mime={wav:'audio/wav',mp3:'audio/mpeg',ogg:'audio/ogg',aac:'audio/aac',m4a:'audio/mp4',flac:'audio/flac',opus:'audio/ogg'}[ext]||'audio/*';
+      modal.classList.remove('light');
+      modal.innerHTML='<div style="padding:24px;width:100%;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">'
+        +'<div style="color:#ddd;font-size:13px">'+esc(item.name)+'</div>'
+        +'<audio id="modalPlayer" controls autoplay preload="auto" style="width:min(520px,92%)">'
+        +'<source src="'+view+'" type="'+mime+'"/>'
+        +'Your browser does not support audio preview.'
+        +'</audio></div>';
+      stage.classList.remove('light');
+      stage.innerHTML='<div class="hint">Audio playing in popup. Cancel preview to free the stream.</div>';
+      var player=document.getElementById('modalPlayer');
+      if(player){
+        player.addEventListener('loadstart',function(){if(token===previewToken) setPreviewBusy(true,'Buffering audio...')});
+        player.addEventListener('canplay',function(){if(token===previewToken) setPreviewBusy(true,'Playing audio...')});
+        player.addEventListener('playing',function(){if(token===previewToken) setPreviewBusy(true,'Playing audio...')});
+        player.addEventListener('ended',function(){if(token===previewToken) setPreviewBusy(false,'Finished')});
+        player.addEventListener('error',function(){
+          if(token!==previewToken) return;
+          var why='Unable to play this audio in the browser. Try Download, or use WAV/MP3.';
+          modal.classList.add('light');
+          modal.innerHTML='<div class="hint">'+esc(why)+'</div>';
+          setPreviewBusy(false,'Play failed');
+        });
+      }
+      setPreviewBusy(true,'Buffering audio...');
+    }else if(kind==='vid'){
+      if(!(ext==='mp4'||ext==='webm')){
         modal.classList.add('light');
         modal.innerHTML='<div class="hint">Only MP4/WEBM can be previewed here. Use Download.</div>';
         setPreviewBusy(false,'Not previewable');
@@ -739,8 +776,7 @@ async function showPreview(item){
       }
       // One stream only - dual <video src> to :81 would stall the single file server.
       modal.classList.remove('light');
-      var tag=kind==='vid'?'video':'audio';
-      modal.innerHTML='<'+tag+' id="modalPlayer" controls autoplay playsinline preload="auto" src="'+view+'"></'+tag+'>';
+      modal.innerHTML='<video id="modalPlayer" controls autoplay playsinline preload="auto" src="'+view+'"></video>';
       stage.classList.remove('light');
       stage.innerHTML='<div class="hint">Playing in popup. Cancel preview to free the stream.</div>';
       var player=document.getElementById('modalPlayer');
@@ -1502,6 +1538,15 @@ document.addEventListener('keydown',function(ev){
   if(ev.ctrlKey&&(ev.key==='v'||ev.key==='V')){ev.preventDefault();runAction('paste', selected&&selected.dir?selected:{name:'',dir:true,path:path})}
   if(ev.key==='Enter'&&selected){ev.preventDefault(); if(selected.dir) go(fullOf(selected)); else showPreview(selected)}
 });
+
+(function(){
+  var hp=window.WFM_HOME_PORT|0;
+  var a=document.getElementById('homeLink');
+  if(a && hp>0){
+    a.href=location.protocol+'//'+location.hostname+':'+hp+'/';
+    a.style.display='';
+  }
+})();
 
 ensureAuth().then(function(){ return go('/'); }).then(function(){loadStatus()});
 setInterval(function(){
